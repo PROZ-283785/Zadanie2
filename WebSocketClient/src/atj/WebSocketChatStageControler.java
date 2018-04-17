@@ -142,7 +142,7 @@ public class WebSocketChatStageControler {
 		public void sendMessage(Message message) {		
 			
 			if(message.hasAttachment()) {		
-				 System.out.println("Plik bin wyslany: ");
+				System.out.println("Plik bin wyslany: ");
 				try {
 					
 					 ByteBuffer buf = ByteBuffer.allocateDirect((int)message.getFile().length());	 
