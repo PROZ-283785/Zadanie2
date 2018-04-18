@@ -5,17 +5,16 @@ import javax.websocket.DecodeException;
 import javax.websocket.Decoder;
 import javax.websocket.EndpointConfig;
 
-public class MessageDecoderTxt implements Decoder.Text<Message>{
+public class MessageDecoderTxt implements Decoder.Text<Message> {
 
 	@Override
 	public void destroy() {
-		
-		
+
 	}
 
 	@Override
 	public void init(EndpointConfig arg0) {
-		
+
 	}
 
 	@Override
