@@ -1,16 +1,22 @@
 package atj;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 
 import javafx.stage.Stage;
 
+/**
+ * Klasa FileHandler zajmuje się obsługą pliku który po odebraniu ma zostać
+ * zapiasany.
+ */
+
 public class FileHandler {
 
-	private ByteBuffer stream;
+	private File stream;	//file got from message
 	private UserInputHandler userInputHandler;
 
 	public FileHandler() {
@@ -18,17 +24,17 @@ public class FileHandler {
 		userInputHandler = new UserInputHandler();
 	}
 
-	public ByteBuffer getStream() {
+	public File getStream() {
 		return stream;
 	}
 
-	public void setStream(ByteBuffer stream) {
-		this.stream = stream;
+	public void setStream(File buffer) {
+		this.stream = buffer;
 	}
 
-	public void update(ByteBuffer stream) {
+	public void update(File file) {
 
-		setStream(stream);
+		setStream(file);
 
 		Stage stage = new Stage();
 		try {
@@ -46,18 +52,28 @@ public class FileHandler {
 
 	private void createFile() {
 
+		FileChannel src;
+		FileChannel dest;
 		File file = new File(userInputHandler.getPath());
 		try {
-			FileOutputStream str = new FileOutputStream(file, false);
-			FileChannel channel = str.getChannel();
 
-			channel.write(stream);
-			str.close();
+			src = new FileInputStream(stream).getChannel();
+			dest = new FileOutputStream(file).getChannel();
+			dest.transferFrom(src, 0, src.size());
+
+			src.close();
+			dest.close();
+			Files.delete(stream.toPath());
+			setStream(null);
 
 		} catch (IOException e) {
 			System.out.println("I/O exception");
 			e.printStackTrace();
 		}
+
+		System.out.println("Zapisano pod ścieżką: " + userInputHandler
+				.getPath());
+
 	}
 
 }

@@ -5,10 +5,12 @@ import atj.FileHandler;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 
 import javax.websocket.*;
 import javax.websocket.Session;
@@ -38,6 +40,7 @@ public class WebSocketChatStageControler {
 	Button btnAddFile;
 	private Message message;
 	private WebSocketClient webSocketClient;
+	private static final int BUFFER_SIZE = 1024 * 1024; //ilość bajtów przesyłana jednorazowo poprzez serwer
 
 	@FXML
 	private void initialize() {
@@ -113,7 +116,7 @@ public class WebSocketChatStageControler {
 
 		@OnError
 		public void onError(Throwable throwable) {
-			System.out.println("Error occured");
+			System.out.println("Error occured" + throwable.getMessage());
 		}
 
 		@OnMessage
@@ -122,18 +125,50 @@ public class WebSocketChatStageControler {
 			chatTextArea.setText(chatTextArea.getText() + message + "\n");
 		}
 
+		/**
+		 * Tworzę plik tmp w którym zbieram dane. Jeśli użytkownik wyrazi chęć
+		 * zapisania pliku to zostanie on skopiowany w docelowe miejsce. W
+		 * przeciwnym razie zostaje usunięty.
+		 * 
+		 * Każdy ByteBuffer ma na końcu jeden bajt mówiący czy jest to ostatni
+		 * fragment pliku czy też nie.
+		 */
+
 		@OnMessage
 		public void onMessage(ByteBuffer stream, Session session) {
-			System.out.println("File received.");
 
+			byte data = stream.get();
+			System.out.println(data);
+			File file = new File("tmp");
+
+			FileOutputStream str;
+			FileChannel channel;
 			try {
-				FileHandler fileHandler = new FileHandler();
-				Platform.runLater(() -> fileHandler.update(stream));
-
-			} catch (Throwable ex) {
-				System.out.println("FileHandler error");
-				ex.printStackTrace();
+				str = new FileOutputStream(file, true);
+				channel = str.getChannel();
+				channel.write(stream);
+				channel.close();
+				str.close();
+			} catch (IOException i) {
+				i.printStackTrace();
 			}
+
+			if (data == 1) {
+				System.out.println("Przyszla czesc pliku");
+			} else {
+				try {
+					System.out.println("Ostatni fragment pliku");
+					FileHandler fileHandler = new FileHandler();
+					Platform.runLater(() -> fileHandler.update(file));
+
+				} catch (Throwable ex) {
+					System.out.println("FileHandler error");
+					ex.printStackTrace();
+				}
+
+				System.out.println("File received.");
+			}
+
 		}
 
 		private void connectToWebSocket() {
@@ -153,25 +188,73 @@ public class WebSocketChatStageControler {
 		public void sendMessage(Message message) {
 
 			if (message.hasAttachment()) {
-				System.out.println("Plik bin wyslany: ");
+
 				try {
+					long fileSize = message.getFile().length();
 
-					ByteBuffer buf = ByteBuffer.allocateDirect((int) message
-							.getFile().length());
-					InputStream is = new FileInputStream(message.getFile());
-					int b;
+					if (fileSize > BUFFER_SIZE) {
 
-					while ((b = is.read()) != -1) {
-						buf.put((byte) b);
+						InputStream is = new FileInputStream(message.getFile());
+						ByteBuffer buf = ByteBuffer.allocateDirect(BUFFER_SIZE
+								+ 1);
+						byte[] bufor = new byte[BUFFER_SIZE];
+
+						while (fileSize > 0) {
+
+							if (fileSize > BUFFER_SIZE) {
+								buf.put((byte) 1); // part
+
+								while (is.read(bufor) != -1) {
+									buf.put(bufor);
+									if (buf.position() == BUFFER_SIZE + 1) {
+										break;
+									}
+								}
+
+								fileSize -= BUFFER_SIZE;
+							} else {
+								buf = ByteBuffer.allocateDirect((int) fileSize
+										+ 1);
+								buf.put((byte) 2); // end
+
+								bufor = new byte[(int) fileSize];
+								while (is.read(bufor) != -1) {
+									buf.put(bufor);
+									fileSize = 0;
+								}
+
+							}
+
+							buf.flip();
+							session.getBasicRemote().sendBinary(buf);
+							buf.clear();
+
+						}
+
+						is.close();
+						session.getBasicRemote().sendText(message.getUser()
+								+ " is sending a file: " + message.getFile()
+										.getName());
+
+					} else {
+						System.out.println("Maly plik");
+						ByteBuffer buf = ByteBuffer.allocateDirect((int) message
+								.getFile().length() + 1);
+						InputStream is = new FileInputStream(message.getFile());
+						int b;
+						buf.put((byte) 2);
+						while ((b = is.read()) != -1) {
+							buf.put((byte) b);
+						}
+
+						is.close();
+						buf.flip();
+
+						session.getBasicRemote().sendBinary(buf);
+						session.getBasicRemote().sendText(message.getUser()
+								+ " is sending a file: " + message.getFile()
+										.getName());
 					}
-
-					is.close();
-					buf.flip();
-
-					session.getBasicRemote().sendBinary(buf);
-					session.getBasicRemote().sendText(message.getUser()
-							+ " is sending a file: " + message.getFile()
-									.getName());
 
 				} catch (IOException ex) {
 					System.out.println("Stream error");
@@ -179,7 +262,7 @@ public class WebSocketChatStageControler {
 
 				File temp = null;
 				message.addFile(temp);
-
+				System.out.println("Plik bin wyslany: ");
 			}
 
 			if (!message.getText().equals("")) {

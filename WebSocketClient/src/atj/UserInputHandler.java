@@ -10,6 +10,14 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+/**
+ * Klasa UserInputHandler ma za zadanie zbierać od użytkownika informacje
+ * odnośnie zapisywanych plików takie jak, wybór ścieżki czy chęć zapisania
+ * pliku.
+ * 
+ *
+ */
+
 public class UserInputHandler extends Application {
 
 	private String path;
@@ -28,7 +36,7 @@ public class UserInputHandler extends Application {
 
 		if (directory != null) {
 			setPath(directory.toString());
-			System.out.println("Zapisano pod ścieżką: " + directory);
+			System.out.println("Zapisywanie pod ścieżką: " + directory);
 		} else {
 			System.out.println("Zrezygnowano z pobierania");
 		}
