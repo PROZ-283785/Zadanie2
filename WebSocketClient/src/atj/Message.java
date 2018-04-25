@@ -9,6 +9,8 @@ public class Message {
 	private File file;
 	private Boolean attached;
 
+	
+
 	public Message() {
 		setUser(null);
 		setText(null);
@@ -25,6 +27,11 @@ public class Message {
 
 			attached = false;
 		}
+	}
+	
+
+	public void setAttached(Boolean attached) {
+		this.attached = attached;
 	}
 
 	public String getUser() {
