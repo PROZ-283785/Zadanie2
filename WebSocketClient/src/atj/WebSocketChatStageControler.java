@@ -40,7 +40,10 @@ public class WebSocketChatStageControler {
 	Button btnAddFile;
 	private Message message;
 	private WebSocketClient webSocketClient;
-	private static final int BUFFER_SIZE = 1024 * 1024; //ilość bajtów przesyłana jednorazowo poprzez serwer
+	private static final int BUFFER_SIZE = 1024 * 1024; // ilość bajtów
+														// przesyłana
+														// jednorazowo poprzez
+														// serwer
 
 	@FXML
 	private void initialize() {
@@ -139,7 +142,9 @@ public class WebSocketChatStageControler {
 
 			byte data = stream.get();
 			System.out.println(data);
-			File file = new File("tmp");
+			String fName = session.getId() + "/tmp";
+			File file = new File(fName);
+			file.getParentFile().mkdirs();
 
 			FileOutputStream str;
 			FileChannel channel;

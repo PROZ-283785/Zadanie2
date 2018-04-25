@@ -47,6 +47,13 @@ public class FileHandler {
 		if (userInputHandler.getPath() != null) {
 			createFile();
 		}
+		else {
+			try {
+				Files.delete(stream.toPath());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 	}
 
