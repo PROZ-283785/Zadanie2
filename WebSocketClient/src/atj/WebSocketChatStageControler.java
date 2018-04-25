@@ -133,7 +133,7 @@ public class WebSocketChatStageControler {
 		 * Tworzę plik tmp w którym zbieram dane. Jeśli użytkownik wyrazi chęć
 		 * zapisania pliku to zostanie on skopiowany w docelowe miejsce. W
 		 * przeciwnym razie zostaje usunięty.
-		 * 
+		 *
 		 * Każdy ByteBuffer ma na końcu jeden bajt mówiący czy jest to ostatni
 		 * fragment pliku czy też nie.
 		 */
@@ -182,7 +182,7 @@ public class WebSocketChatStageControler {
 					.getWebSocketContainer();
 			try {
 				URI uri = URI.create(
-						"ws://localhost:4949/WebSocket/websocketendpoint");
+						"ws://localhost:8080/WebSocket/websocketendpoint");
 				webSocketContainer.connectToServer(this, uri);
 
 			} catch (DeploymentException | IOException e) {
@@ -191,13 +191,13 @@ public class WebSocketChatStageControler {
 
 		}
 
-		
-		
+
+
 		public void sendMessage(Message message) {
 
 			 Task<Void> task = new Task<Void>() {
 		         @Override protected Void call() throws Exception {
-		          
+
 
 		 				try {
 		 					long fileSize = message.getFile().length();
@@ -273,12 +273,12 @@ public class WebSocketChatStageControler {
 		 				File temp = null;
 		 				message.addFile(temp);
 		 				System.out.println("Plik bin wyslany: ");
-		 			
+
 
 		             return null;
 		         }
 		     };
-		     
+
 		     if(message.hasAttachment()) {
 		    	 Thread th = new Thread(task);
 		         th.setDaemon(true);
@@ -293,10 +293,10 @@ public class WebSocketChatStageControler {
 	 				} catch (IOException e) {
 	 					e.printStackTrace();
 	 				}
-		    	 
+
 		     }
-		            
-		     
+
+
 		}
 
 	}
